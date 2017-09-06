@@ -18,6 +18,11 @@ public class CollectTxInfoTask extends ComputeTaskAdapter<Void, Collection<TxInf
     private boolean serverOnly;
     private long timeout;
 
+    /**
+     * @param serverOnly If {@code true} only server nodes will be queried for active transactions.
+     * @param timeout Transactions that were active for amount of time lower than this value will be filtered out from output.
+     *                If parameter has zero or negative value, all transactions will be returned.
+     */
     public CollectTxInfoTask(boolean serverOnly, long timeout) {
         this.serverOnly = serverOnly;
         this.timeout = timeout;
