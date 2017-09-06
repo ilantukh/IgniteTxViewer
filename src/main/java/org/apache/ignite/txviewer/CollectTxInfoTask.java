@@ -70,9 +70,13 @@ public class CollectTxInfoTask extends ComputeTaskAdapter<Void, Collection<TxInf
 
             Set<TxInfo> txInfos = new HashSet<>();
 
-            for (IgniteInternalTx tx : activeTxs)
+            for (IgniteInternalTx tx : activeTxs) {
+                if (tx.nearXidVersion() == null)
+                    continue;
+
                 if (timeout <= 0 || (curTime - tx.startTime()) >= timeout)
-                    txInfos.add(new TxInfo(tx.nearXidVersion() != null ? tx.nearXidVersion().toString() : "", tx.nodeId(), tx.threadId(), tx.startTime()));
+                    txInfos.add(new TxInfo(tx.nearXidVersion().toString(), tx.nodeId(), tx.threadId(), tx.startTime()));
+            }
 
             return txInfos;
         }
