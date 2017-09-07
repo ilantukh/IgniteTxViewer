@@ -90,8 +90,8 @@ public class CollectTxInfoTask extends ComputeTaskAdapter<Void, Collection<TxInf
                             Object keyObj = txEntry.key().value(coCtx, false);
                             String key = keyObj != null ? keyObj.toString() : "null";
 
-                            Object valObj = txEntry.value().value(coCtx, false);
-                            String val = txEntry.key().value(coCtx, false).toString();
+                            Object valObj = txEntry.value() != null ? txEntry.value().value(coCtx, false) : null;
+                            String val = valObj != null ? valObj.toString() : null;
 
                             txEntries.add(new TxEntryInfo(cacheName, key, val, txEntry.op().toString()));
                         }
