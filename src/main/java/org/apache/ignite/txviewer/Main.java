@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         String cfgPath = System.getProperty("config");
 
-        boolean serverOnly = System.getProperty("serverOnly") == null || Boolean.parseBoolean(System.getProperty("serverOnly"));
+        boolean serverOnly = System.getProperty("serverOnly") != null && Boolean.parseBoolean(System.getProperty("serverOnly"));
         long timeout = System.getProperty("timeout") == null ? 0 : Long.parseLong(System.getProperty("timeout"));
 
         Ignite ignite = Ignition.start(cfgPath);
