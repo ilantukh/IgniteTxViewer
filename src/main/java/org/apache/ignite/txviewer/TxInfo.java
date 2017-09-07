@@ -1,20 +1,26 @@
 package org.apache.ignite.txviewer;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 public class TxInfo implements Serializable {
 
     private String nearXidVersion;
     private final UUID nodeId;
+    private final String nodeString;
     private final long threadId;
     private final long startTime;
+    private final Collection<TxEntryInfo> entries;
 
-    public TxInfo(String nearXidVersion, UUID nodeId, long threadId, long startTime) {
+    public TxInfo(String nearXidVersion, UUID nodeId, String nodeString, long threadId, long startTime, Collection<TxEntryInfo> entries) {
         this.nearXidVersion = nearXidVersion;
         this.nodeId = nodeId;
+        this.nodeString = nodeString;
         this.threadId = threadId;
         this.startTime = startTime;
+        this.entries = Collections.unmodifiableCollection(entries);
     }
 
     public String nearXidVersion() {
@@ -25,12 +31,20 @@ public class TxInfo implements Serializable {
         return nodeId;
     }
 
+    public String nodeString() {
+        return nodeString;
+    }
+
     public long threadId() {
         return threadId;
     }
 
     public long startTime() {
         return startTime;
+    }
+
+    public Collection<TxEntryInfo> entries() {
+        return entries;
     }
 
     @Override

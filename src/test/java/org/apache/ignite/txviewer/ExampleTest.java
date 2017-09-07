@@ -24,7 +24,7 @@ public class ExampleTest {
     private IgniteConfiguration igniteConfiguration(String name) {
         return new IgniteConfiguration()
                 .setDiscoverySpi(new TcpDiscoverySpi().setIpFinder(IP_FINDER))
-                .setIgniteInstanceName(name);
+                .setGridName(name);
     }
 
     @Test
@@ -54,9 +54,11 @@ public class ExampleTest {
         ignite4.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.READ_COMMITTED);
         ignite4.cache("tx").put(4, 4);
 
-        Collection<TxInfo> txInfos = ignite1.compute().execute(new CollectTxInfoTask(false, 0), null);
+        final Ignite client = Ignition.start(igniteConfiguration("client").setClientMode(true));
 
-        assertTrue(txInfos.size() >= 4);
+        Collection<TxInfo> txInfos = client.compute().execute(new CollectTxInfoTask(false, 0), null);
+
+        assertEquals(4, txInfos.size());
     }
 
     @After

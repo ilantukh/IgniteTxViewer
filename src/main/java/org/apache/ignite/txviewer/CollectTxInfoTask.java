@@ -1,5 +1,6 @@
 package org.apache.ignite.txviewer;
 
+import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.compute.ComputeJob;
@@ -7,7 +8,9 @@ import org.apache.ignite.compute.ComputeJobAdapter;
 import org.apache.ignite.compute.ComputeJobResult;
 import org.apache.ignite.compute.ComputeTaskAdapter;
 import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.cache.CacheObjectContext;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +45,7 @@ public class CollectTxInfoTask extends ComputeTaskAdapter<Void, Collection<TxInf
 
     @Nullable
     public Collection<TxInfo> reduce(List<ComputeJobResult> results) throws IgniteException {
-        Set<TxInfo> txInfos = new HashSet<>();
+        List<TxInfo> txInfos = new ArrayList<>();
 
         for (ComputeJobResult result : results)
             txInfos.addAll(result.<Collection<TxInfo>>getData());
@@ -71,11 +74,34 @@ public class CollectTxInfoTask extends ComputeTaskAdapter<Void, Collection<TxInf
             Set<TxInfo> txInfos = new HashSet<>();
 
             for (IgniteInternalTx tx : activeTxs) {
-                if (tx.nearXidVersion() == null)
+                if (tx.nearXidVersion() == null || !tx.near())
                     continue;
 
-                if (timeout <= 0 || (curTime - tx.startTime()) >= timeout)
-                    txInfos.add(new TxInfo(tx.nearXidVersion().toString(), tx.nodeId(), tx.threadId(), tx.startTime()));
+                if (timeout <= 0 || (curTime - tx.startTime()) >= timeout) {
+                    ClusterNode node = ignite.context().discovery().node(tx.nodeId());
+
+                    Collection<TxEntryInfo> txEntries = new ArrayList<>();
+
+                    for (IgniteTxEntry txEntry : tx.allEntries()) {
+                        try {
+                            String cacheName = ignite.context().cache().cacheDescriptor(txEntry.cacheId()).cacheConfiguration().getName();
+                            CacheObjectContext coCtx = ignite.context().cache().context().cacheContext(txEntry.cacheId()).cacheObjectContext();
+
+                            Object keyObj = txEntry.key().value(coCtx, false);
+                            String key = keyObj != null ? keyObj.toString() : "null";
+
+                            Object valObj = txEntry.value().value(coCtx, false);
+                            String val = txEntry.key().value(coCtx, false).toString();
+
+                            txEntries.add(new TxEntryInfo(cacheName, key, val, txEntry.op().toString()));
+                        }
+                        catch (Exception ex) {
+                            throw new IgniteException(ex);
+                        }
+                    }
+
+                    txInfos.add(new TxInfo(tx.nearXidVersion().toString(), tx.nodeId(), node.toString(), tx.threadId(), tx.startTime(), txEntries));
+                }
             }
 
             return txInfos;
