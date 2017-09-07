@@ -6,6 +6,7 @@ import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.transactions.TransactionConcurrency;
@@ -28,7 +29,7 @@ public class ExampleTest {
     }
 
     @Test
-    public void test() {
+    public void test() throws Exception {
         final Ignite ignite1 = Ignition.start(igniteConfiguration("ignite1"));
         final Ignite ignite2 = Ignition.start(igniteConfiguration("ignite2"));
         final Ignite ignite3 = Ignition.start(igniteConfiguration("ignite3"));
@@ -54,11 +55,18 @@ public class ExampleTest {
         ignite4.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.READ_COMMITTED);
         ignite4.cache("tx").put(4, 4);
 
-        final Ignite client = Ignition.start(igniteConfiguration("client").setClientMode(true));
+        final Ignite client1 = Ignition.start(igniteConfiguration("client1").setClientMode(true));
 
-        Collection<TxInfo> txInfos = client.compute().execute(new CollectTxInfoTask(false, 0), null);
+        client1.cache("tx");
 
-        assertEquals(4, txInfos.size());
+        client1.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.READ_COMMITTED);
+        client1.cache("tx").put(5, 5);
+
+        final Ignite client2 = Ignition.start(igniteConfiguration("client2").setClientMode(true));
+
+        Collection<TxInfo> txInfos = client2.compute(client2.cluster()).execute(new CollectTxInfoTask(false, 0), null);
+
+        assertEquals(5, txInfos.size());
     }
 
     @After

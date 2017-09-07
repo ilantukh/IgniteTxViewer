@@ -15,7 +15,7 @@ public class Main {
 
         Ignite ignite = Ignition.start(cfgPath);
 
-        Collection<TxInfo> txInfos = ignite.compute().execute(new CollectTxInfoTask(serverOnly, timeout), null);
+        Collection<TxInfo> txInfos = ignite.compute(ignite.cluster()).execute(new CollectTxInfoTask(serverOnly, timeout), null);
 
         System.out.println("Active transactions:");
 

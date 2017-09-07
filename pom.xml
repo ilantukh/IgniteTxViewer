@@ -22,6 +22,12 @@
             <version>2.0.0</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.ignite</groupId>
+            <artifactId>ignite-indexing</artifactId>
+            <scope>provided</scope>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>LATEST</version>
